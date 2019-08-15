@@ -124,8 +124,6 @@ public class Hotel
 	{
 		ICalendario cal = Infrastructure.getInstance().getCalendario();
 		//fi o ff de reserva esta entre  fechas
-//		boolean c1 = ( cal.esAnterior(r.getFechaInicio(), fi) || cal.esPosterior(r.getFechaInicio(), fi) ) 
-//						&& cal.esAnterior(r.getFechaInicio(), ff);
 		boolean c1 = ( cal.esAnterior(r.getFechaInicio(), fi) || cal.esPosterior(r.getFechaInicio(), fi) || cal.esMismoDia(r.getFechaInicio(), fi) ) 
 				&& ( cal.esAnterior(r.getFechaInicio(), ff) /*|| cal.esMismoDia(r.getFechaInicio(), ff) */);
 		
@@ -137,6 +135,7 @@ public class Hotel
 	
 		
 		return (c1 && c3);
+//		return ( cal.esAnterior(fi, r.getFechaFin())  )&& ( cal.esAnterior(r.getFechaInicio(), ff) );
 	}
 	//cantidad de reservas entre fechas
 	public Set<Reserva> obtenerReservasEntreFecha(GregorianCalendar fi,GregorianCalendar ff)
@@ -156,7 +155,7 @@ public class Hotel
 	
 	public boolean confirmarDisponibilidad(TipoHabitacion tipoHabitacion,GregorianCalendar fechaInicio, GregorianCalendar fechaFin)
 	{
-		ICalendario cal = Infrastructure.getInstance().getCalendario();
+		//ICalendario cal = Infrastructure.getInstance().getCalendario();
 
 		Set<Habitacion> habitacionesTipo = obtenerHabitacionesPorTipoHabitacion(tipoHabitacion);
 		Set<Reserva> reservasEntreFechas = obtenerReservasEntreFecha(fechaInicio, fechaFin);
@@ -165,7 +164,9 @@ public class Hotel
 		Set<Reserva> reservasTipo = new HashSet<Reserva>(); 
 		
 		for(Reserva r : reservasEntreFechas) {
-			if(r.getTipoHabitacion().getNombre().equals(tipoHabitacion.getNombre()) )
+			if(r.getTipoHabitacion().getNombre().equals(tipoHabitacion.getNombre())
+					&& (r.getEstado() != String.valueOf(EstadoReserva.Cancelada) 
+					 )  )
 			{
 					reservasTipo.add(r);
 			}
@@ -244,7 +245,7 @@ public class Hotel
 	}
 
 	
-	public Reserva modificarReserva(long codigoReserva,Hotel hotelNuevo,Cliente cli, TipoHabitacion tipo,
+	public Reserva modificarReserva(long codigoReserva,Hotel hotelNuevo, TipoHabitacion tipo,
 			GregorianCalendar fi,GregorianCalendar ff, boolean modificable)
 	{
 		Reserva res = buscarReservaPorCodigo(codigoReserva);
@@ -254,8 +255,8 @@ public class Hotel
 		{
 		
 			res.setHotel(hotelNuevo);
-			res.setCodigo(codigoReserva);
-			res.setCliente(cli);
+//			res.setCodigo(codigoReserva);
+//			res.setCliente(cli);
 			res.setTipoHabitacion(tipo);
 			res.setFechaInicio(fi);
 			res.setFechaFin(ff);
@@ -272,5 +273,23 @@ public class Hotel
 //		Reserva r = buscarReservaPorCodigo(code);
 //		r.setEstado(String.valueOf(EstadoReserva.Cancelada));
 		return this.reservas.remove(code);
+	}
+	
+	public boolean confirmarDisponibilidadTomarReserva(String nombreCliente,Hotel hotel,TipoHabitacion tipoHabitacion, GregorianCalendar fechaInicio, GregorianCalendar fechaFin)
+	{
+		Set<Habitacion> habitacionesTipo = obtenerHabitacionesPorTipoHabitacion(tipoHabitacion);
+		Set<Reserva> reservasEntreFechas = obtenerReservasEntreFecha(fechaInicio, fechaFin);
+
+		
+		Set<Reserva> reservasTipo = new HashSet<Reserva>(); 
+		
+		for(Reserva r : reservasEntreFechas) {
+			if(r.getTipoHabitacion().getNombre().equals(tipoHabitacion.getNombre())
+					  &&(r.getCliente().getNombre() != nombreCliente)  )
+			{
+					reservasTipo.add(r);
+			}
+		}
+		return habitacionesTipo.size() > reservasTipo.size();
 	}
 }

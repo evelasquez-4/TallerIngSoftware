@@ -11,12 +11,14 @@ import org.tds.sgh.dtos.ClienteDTO;
 import org.tds.sgh.dtos.DTO;
 import org.tds.sgh.dtos.HotelDTO;
 import org.tds.sgh.dtos.ReservaDTO;
+import org.tds.sgh.infrastructure.ICalendario;
 import org.tds.sgh.infrastructure.Infrastructure;
 
 public class HacerReservaController implements IHacerReservaController {
 	
 	private CadenaHotelera cadenaHotelera;
 	private Cliente cliente;
+	private ICalendario cal = Infrastructure.getInstance().getCalendario();
 	
 	public HacerReservaController(CadenaHotelera cadenaHotelera) {
 		this.cadenaHotelera = cadenaHotelera;
@@ -50,6 +52,11 @@ public class HacerReservaController implements IHacerReservaController {
 	public boolean confirmarDisponibilidad(String nombreHotel, String nombreTipoHabitacion,
 			GregorianCalendar fechaInicio, GregorianCalendar fechaFin) throws Exception {
 		// TODO Auto-generated method stub
+		if(cal.esAnterior(fechaInicio, cal.getHoy() ))
+			throw new Exception("Fecha inicio no puede ser menor q hoy.");
+		else if(cal.esPosterior(fechaInicio, fechaFin))
+			throw new Exception("Fecha inicio no puede ser mayor a fecha fin.");
+		
 		return cadenaHotelera.confirmarDisponibilidad(nombreHotel, nombreTipoHabitacion, fechaInicio, fechaFin);
 	}
 
@@ -68,6 +75,15 @@ public class HacerReservaController implements IHacerReservaController {
 	public Set<HotelDTO> sugerirAlternativas(String pais, String nombreTipoHabitacion, GregorianCalendar fechaInicio,
 			GregorianCalendar fechaFin) throws Exception {
 		// TODO Auto-generated method stub
+	
+		
+		if(cal.esAnterior(fechaFin,fechaInicio))
+			throw new Exception("Fecha final no puede ser antes q inicial.");
+		
+		else if(cal.esAnterior(fechaInicio, cal.getHoy() ))
+			throw new Exception("Fecha final no puede ser menor q hoy.");
+		
+		
 		Set<Hotel> alternativas = cadenaHotelera.sugerirAlternativas(pais,nombreTipoHabitacion,fechaInicio,fechaFin);
 		
 		return DTO.getInstance().mapHoteles(alternativas);

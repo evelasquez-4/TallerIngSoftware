@@ -13,12 +13,11 @@ import org.tds.sgh.dtos.HotelDTO;
 import org.tds.sgh.dtos.ReservaDTO;
 import org.tds.sgh.infrastructure.Infrastructure;
 
-public class TomarReservaController implements ITomarReservaController{
-	
+public class TomarReservaController implements ITomarReservaController {
+
 	private CadenaHotelera cadenaHotelera;
 	private Cliente cliente;
 	private Reserva reserva;
-	
 
 	public TomarReservaController(CadenaHotelera cadenaHotelera) {
 		// TODO Auto-generated constructor stub
@@ -50,19 +49,24 @@ public class TomarReservaController implements ITomarReservaController{
 	public boolean confirmarDisponibilidad(String nombreHotel, String nombreTipoHabitacion,
 			GregorianCalendar fechaInicio, GregorianCalendar fechaFin) throws Exception {
 		// TODO Auto-generated method stub
-		return cadenaHotelera.confirmarDisponibilidad(nombreHotel, nombreTipoHabitacion, fechaInicio, fechaFin);
+		String nombreCliente = this.cliente != null ? this.cliente.getNombre() : this.reserva.getCliente().getNombre();
+		// return cadenaHotelera.confirmarDisponibilidad(nombreHotel,
+		// nombreTipoHabitacion, fechaInicio, fechaFin);
+		return cadenaHotelera.confirmarDisponibilidadTomarReserva(nombreCliente, nombreHotel, nombreTipoHabitacion,
+				fechaInicio, fechaFin);
 	}
 
 	@Override
 	public ReservaDTO registrarReserva(String nombreHotel, String nombreTipoHabitacion, GregorianCalendar fechaInicio,
 			GregorianCalendar fechaFin, boolean modificablePorHuesped) throws Exception {
 		// TODO Auto-generated method stub
-		Reserva res = cadenaHotelera.registrarReserva(cliente.getRut(),nombreHotel, nombreTipoHabitacion, fechaInicio, fechaFin, modificablePorHuesped);
-  		
+		Reserva res = cadenaHotelera.registrarReserva(cliente.getRut(), nombreHotel, nombreTipoHabitacion, fechaInicio,
+				fechaFin, modificablePorHuesped);
+
 		Infrastructure.getInstance().getSistemaMensajeria().enviarMail(res.getCliente().getMail(), "", "ok");
-		
+
 		this.reserva = res;
-		
+
 		return DTO.getInstance().map(res);
 	}
 
@@ -70,8 +74,8 @@ public class TomarReservaController implements ITomarReservaController{
 	public Set<HotelDTO> sugerirAlternativas(String pais, String nombreTipoHabitacion, GregorianCalendar fechaInicio,
 			GregorianCalendar fechaFin) throws Exception {
 		// TODO Auto-generated method stub
-		Set<Hotel> alternativas = cadenaHotelera.sugerirAlternativas(pais,nombreTipoHabitacion,fechaInicio,fechaFin);
-		
+		Set<Hotel> alternativas = cadenaHotelera.sugerirAlternativas(pais, nombreTipoHabitacion, fechaInicio, fechaFin);
+
 		return DTO.getInstance().mapHoteles(alternativas);
 	}
 
@@ -88,40 +92,45 @@ public class TomarReservaController implements ITomarReservaController{
 	public ReservaDTO modificarReserva(String nombreHotel, String nombreTipoHabitacion, GregorianCalendar fechaInicio,
 			GregorianCalendar fechaFin, boolean modificablePorHuesped) throws Exception {
 		// TODO Auto-generated method stub
-		return null;
+		if (!this.reserva.isModificablePorHuesped())
+			throw new Exception("No existe un tipo de habitación con el nombresds indicado.");
+
+		String clienteRut = this.cliente != null ? this.cliente.getRut():"";
+		Reserva res = this.cadenaHotelera.modificarReserva(nombreHotel, clienteRut, this.reserva.getCodigo(), nombreHotel, nombreTipoHabitacion, fechaInicio, fechaFin, modificablePorHuesped);
+		Infrastructure.getInstance().getSistemaMensajeria().enviarMail(reserva.getCliente().getMail(), "", "ok");
+		return DTO.getInstance().mapReserva(res);
 	}
 
 	@Override
 	public Set<ReservaDTO> buscarReservasPendientes(String nombreHotel) throws Exception {
 		// TODO Auto-generated method stub
 		Set<Reserva> pendientes = cadenaHotelera.buscarReservasPendientes(nombreHotel);
-		
+
 		return DTO.getInstance().mapReservas(pendientes);
 	}
 
 	@Override
 	public ReservaDTO seleccionarReserva(long codigoReserva) throws Exception {
-		// TODO Auto-generated method stub		
-		if(cliente == null)
+		// TODO Auto-generated method stub
+		if (cliente == null)
 			reserva = this.cadenaHotelera.obtenerReservaPorCodigo(codigoReserva);
 		else
-			reserva = this.cadenaHotelera.seleccionarReserva(codigoReserva,this.cliente.getRut());
+			reserva = this.cadenaHotelera.seleccionarReserva(codigoReserva, this.cliente.getRut());
 		return DTO.getInstance().mapReserva(reserva);
 	}
 
 	@Override
 	public ReservaDTO registrarHuesped(String nombre, String documento) throws Exception {
 		// TODO Auto-generated method stub
-		Reserva res = this.cadenaHotelera.registrarHuesped(this.reserva.getCodigo(),nombre,documento);
+		Reserva res = this.cadenaHotelera.registrarHuesped(this.reserva.getCodigo(), nombre, documento);
 		return DTO.getInstance().mapReserva(res);
 	}
 
 	@Override
 	public ReservaDTO tomarReserva() throws Exception {
-		Reserva res = this.cadenaHotelera.tomarReserva(this.reserva.getHotel().getNombre(),
-				 this.reserva.getCodigo());
+		Reserva res = this.cadenaHotelera.tomarReserva(this.reserva.getHotel().getNombre(), this.reserva.getCodigo());
 		Infrastructure.getInstance().getSistemaMensajeria().enviarMail(res.getCliente().getMail(), "", "ok");
-		ReservaDTO reservaDTO=	DTO.getInstance().mapReserva(res);
+		ReservaDTO reservaDTO = DTO.getInstance().mapReserva(res);
 		Infrastructure.getInstance().getSistemaFacturacion().iniciarEstadia(reservaDTO);
 		return reservaDTO;
 	}

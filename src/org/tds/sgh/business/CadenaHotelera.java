@@ -185,7 +185,9 @@ public class CadenaHotelera
 		for(Hotel h : hoteles.values()) {
 			if(h.getPais().equals(pais)) {
 				if( h.confirmarDisponibilidad(th, fechaInicio, fechaFin) )
+				{
 					alternativas.add(h);
+				}
 			}
 		}
 		
@@ -288,7 +290,6 @@ public class CadenaHotelera
 	public Reserva modificarReserva(String hotelAnt,String rutCliente,long codigoReserva,String nombreHotel, String nombreTipoHabitacion, GregorianCalendar fechaInicio,
 			GregorianCalendar fechaFin, boolean modificablePorHuesped) throws Exception {
 		
-		Cliente cliente = buscarCliente(rutCliente);
 		Hotel hotelNuevo = buscarHotel(nombreHotel);
 		TipoHabitacion th = buscarTipoHabitacion(nombreTipoHabitacion);
 		
@@ -297,12 +298,14 @@ public class CadenaHotelera
 		if(hotelAnterior.getNombre() == hotelNuevo.getNombre())
 		{
 				
-			Reserva res = hotelAnterior.modificarReserva(codigoReserva, hotelNuevo, cliente, th,
+			Reserva res = hotelAnterior.modificarReserva(codigoReserva, hotelNuevo, th,
 					fechaInicio, fechaFin, modificablePorHuesped);
 			// eliminarReserva(codigoReserva);
 			// Reserva aux = hotelAnt.eliminarReserva(codigoReserva);
 			return res;
 		}else {
+			
+			Cliente cliente = buscarCliente(rutCliente);
 			cliente.obtenerReservaPorCondigo(codigoReserva).setCodigo(codigoReserva+1);
 			
 			Reserva res = hotelNuevo.registraReserva(cliente, th, fechaInicio, fechaFin, modificablePorHuesped) ;
@@ -328,7 +331,14 @@ public class CadenaHotelera
 		}
 	}
 	
-
+	public boolean confirmarDisponibilidadTomarReserva(String nombreCliente, String nombreHotel,String nombreTipoHabitacion,GregorianCalendar fi,GregorianCalendar ff) throws Exception
+	{
+		TipoHabitacion tipohab = buscarTipoHabitacion(nombreTipoHabitacion);
+		Hotel hotel = buscarHotel(nombreHotel); 
+		boolean res = hotel.confirmarDisponibilidadTomarReserva(nombreCliente,hotel, tipohab, fi, ff);
+		
+		return res;
+	}
 	
 	
 }
